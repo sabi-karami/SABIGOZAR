@@ -105,7 +105,7 @@ async function settings(inp, st, log) {
   if (have) log(`Volume «${have.name}» on ${MOUNT} exists (${have.region || ""})`);
   else { await gql(T, `mutation($i: VolumeCreateInput!){ volumeCreate(input:$i){ id } }`, { i: { projectId: st.pid, serviceId: st.sid, environmentId: st.eid, mountPath: MOUNT } }); log(`Volume created on ${MOUNT}`, "ok"); }
   const upd = `mutation($i: ServiceInstanceUpdateInput!){ serviceInstanceUpdate(environmentId:"${st.eid}", serviceId:"${st.sid}", input:$i) }`;
-  for (const [k, v] of [["healthcheckPath", "/healthz"], ["healthcheckTimeout", 300], ["restartPolicyType", "ALWAYS"], ["dockerfilePath", "Dockerfile"], ["builder", "DOCKERFILE"]]) {
+  for (const [k, v] of [["healthcheckPath", "/healthz"], ["healthcheckTimeout", 300], ["restartPolicyType", "ALWAYS"], ["dockerfilePath", "Dockerfile"]]) {
     const r = await gql(T, upd, { i: { [k]: v } }, true);
     log(r.errors ? `${k}: not accepted by Railway (${r.errors[0].message})` : `${k} = ${v}`, r.errors ? "warn" : "ok");
   }
