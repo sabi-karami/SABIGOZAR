@@ -4,7 +4,8 @@
 Does everything the manual guide does, through the official APIs, and is safe to run again
 (idempotent): an existing project / service / volume / domain / DNS record is reused, not duplicated.
 
-  1. Railway: project, service from your GitHub repo, volume on /var/lib/sabigozar,
+  1. Railway: project, service from your GitHub repo, volume on /var/lib/sabigozar (automatic),
+     ADMIN_USERNAME + a strong random ADMIN_PASSWORD in Variables (automatic, kept on re-runs),
      service settings (healthcheck /healthz, restart ALWAYS, Dockerfile), region,
      Railway domain (port 8080), TCP Proxy (port 8443 = Reality), variables
   2. Railway: custom domain (e.g. panel.example.com)
@@ -28,7 +29,7 @@ Example:
 
 Only the Python standard library is used.
 """
-import argparse, base64, json, os, sys, time, urllib.error, urllib.parse, urllib.request
+import argparse, base64, json, os, secrets, string, sys, time, urllib.error, urllib.parse, urllib.request
 
 RAILWAY_API = os.getenv("RAILWAY_API", "https://backboard.railway.app/graphql/v2")
 CF_API = "https://api.cloudflare.com/client/v4"
@@ -39,6 +40,15 @@ TERMINAL = ("SUCCESS", "FAILED", "CRASHED", "REMOVED")
 # applied one by one: Railway rejects the whole update if a single field is not accepted
 SERVICE_SETTINGS = [{"healthcheckPath": "/healthz"}, {"healthcheckTimeout": 300},
                     {"restartPolicyType": "ALWAYS"}, {"dockerfilePath": "Dockerfile"}]
+
+
+def strong_password(n=18):
+    """12+ chars, 2 upper, 2 lower, 2 digits, 1 symbol: the rules bootstrap.py enforces."""
+    rnd = secrets.SystemRandom()
+    chars = ([rnd.choice(string.ascii_uppercase) for _ in range(4)] + [rnd.choice(string.ascii_lowercase) for _ in range(n - 10)] +
+             [rnd.choice(string.digits) for _ in range(4)] + [rnd.choice("!@#%^*-_=+") for _ in range(2)])
+    rnd.shuffle(chars)
+    return "".join(chars)
 
 
 def log(*a):
@@ -132,6 +142,16 @@ def railway_setup(rw, a):
         variables[k.strip()] = v
 
     svc = next((s for s in edges(proj["services"]) if s["name"] == a.service), None)
+    existing = {}
+    if svc:
+        d, _ = rw.q("query($p:String!,$e:String!,$s:String!){ variables(projectId:$p, environmentId:$e, serviceId:$s) }",
+                    {"p": pid, "e": eid, "s": svc["id"]}, soft=True)
+        existing = d.get("variables") or {}
+    # owner login lives in Railway > Variables, so it is always visible and never lost
+    variables.setdefault("ADMIN_USERNAME", existing.get("ADMIN_USERNAME") or a.admin_username)
+    variables.setdefault("ADMIN_PASSWORD", existing.get("ADMIN_PASSWORD") or os.getenv("ADMIN_PASSWORD") or strong_password())
+    if not existing.get("ADMIN_PASSWORD"):
+        log("ADMIN_USERNAME / ADMIN_PASSWORD set in Railway > Variables (eye icon to view)")
     if svc:
         sid = svc["id"]; log(f"service {a.service}: exists")
         for k, v in variables.items():
@@ -142,6 +162,7 @@ def railway_setup(rw, a):
                     {"i": {"projectId": pid, "name": a.service, "source": {"repo": a.repo}, "variables": variables}})
         sid = d["serviceCreate"]["id"]; log(f"service {a.service}: created from github.com/{a.repo}")
     log("variables: " + ", ".join(sorted(variables)))
+    a._pw = variables["ADMIN_PASSWORD"]
 
     d, _ = rw.q("query($p:String!){ project(id:$p){ volumes { edges { node { id volumeInstances { edges { node { mountPath serviceId region } } } } } } } }", {"p": pid})
     vols = [vi for v in edges(d["project"]["volumes"]) for vi in edges(v["volumeInstances"])]
@@ -348,8 +369,8 @@ def verify(a, info):
     log(f"healthz: {code} (served by {via})")
     if code != 200:
         log("WARNING: panel not reachable on the custom domain yet"); return False
-    user = info.get("username") or "sabigozar"
-    pw = os.getenv("ADMIN_PASSWORD") or info.get("password") or ""
+    user = info.get("username") or a.admin_username
+    pw = getattr(a, "_pw", "") or os.getenv("ADMIN_PASSWORD") or info.get("password") or ""
     if not pw or pw.startswith("("):
         log("password hidden in logs: export ADMIN_PASSWORD to run the login test"); return True
     code, res, _ = http("POST", base + "/api/admin/token", {"username": user, "password": pw}, form=True)
@@ -398,6 +419,7 @@ def main():
     p.add_argument("--repo", required=True, help="GitHub repo, e.g. you/SABIGOZAR (Railway GitHub App needs access)")
     p.add_argument("--domain", required=True, help="panel hostname, e.g. panel.example.com (zone must be on Cloudflare)")
     p.add_argument("--project", default="SABIGOZAR")
+    p.add_argument("--admin-username", default="sabigozar", help="owner username (first install only)")
     p.add_argument("--service", default="sabigozar")
     p.add_argument("--workspace", help="Railway workspace name or id (default: first)")
     p.add_argument("--region", default=DEFAULT_REGION, help=f"Railway region (default {DEFAULT_REGION}, EU West); '' to keep")
@@ -427,7 +449,7 @@ def main():
     print("\n╔════════════════════ SABIGOZAR deployed ════════════════════╗", flush=True)
     print(f"  Panel    : https://{a.domain}/dashboard/")
     print(f"  Username : {info.get('username') or 'sabigozar'}")
-    print("  Password : Railway > Deployments > latest > View Logs (or ADMIN_PASSWORD)")
+    print("  Password : Railway > Variables > ADMIN_PASSWORD (eye icon)")
     print(f"  Reality  : {r['tcp']}")
     print(f"  Check    : {'passed' if ok else 'see warnings above'}")
     print("╚" + "═" * 61 + "╝")
