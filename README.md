@@ -130,6 +130,8 @@ SABIGOZAR یک پنل کامل مدیریت کاربر و نمایندگی اس�
 
 نصب حدود ۱۰ دقیقه طول می‌کشد.
 
+> **🖱 پنل نصب با یک دکمه:** پوشه‌ی [`panel/`](panel/README.md) یک پنل وب روی Cloudflare Workers است. توکن Railway و Cloudflare را وارد می‌کنی، یک دکمه می‌زنی و همه‌ی مراحل زیر انجام و تست می‌شود و یک گزارش کامل می‌گیری.
+
 > **⚡ نصب خودکار با یک دستور:** اگر دامنه‌ات روی Cloudflare است، اسکریپت [`tools/deploy.py`](tools/deploy.py) همه‌ی قدم‌های زیر را انجام می‌دهد: پروژه، Volume، Health Check، Restart Policy، منطقه‌ی اروپا، TCP Proxy، دامنه‌ی شخصی، رکوردهای Cloudflare، Redeploy و تست کامل. راهنمای کامل: [docs/DEPLOY-AUTOMATION.md](docs/DEPLOY-AUTOMATION.md)
 
 ### قدم ۱: ریپو را در GitHub خودت داشته باش
