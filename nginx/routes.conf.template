@@ -1,0 +1,7 @@
+# SABIGOZAR proxy routes (generated per install, __SEED__ = random)
+location = /__SEED__/vw  { proxy_pass http://127.0.0.1:10001; include /etc/nginx/sabigozar/ws.inc; }
+location = /__SEED__/vh  { proxy_pass http://127.0.0.1:10002; include /etc/nginx/sabigozar/ws.inc; }
+location ^~ /__SEED__/vx { proxy_pass http://127.0.0.1:10003; include /etc/nginx/sabigozar/xhttp.inc; }
+location = /__SEED__/tw  { proxy_pass http://127.0.0.1:10004; include /etc/nginx/sabigozar/ws.inc; }
+location = /__SEED__/mw  { proxy_pass http://127.0.0.1:10005; include /etc/nginx/sabigozar/ws.inc; }
+location = /__SEED__/th  { proxy_pass http://127.0.0.1:10006; include /etc/nginx/sabigozar/ws.inc; }

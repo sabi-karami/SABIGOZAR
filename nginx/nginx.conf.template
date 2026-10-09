@@ -1,0 +1,37 @@
+# SABIGOZAR edge  ·  only public entry, Railway terminates TLS in front of it
+user www-data;
+worker_processes auto;
+worker_rlimit_nofile 65535;
+pid /run/nginx.pid;
+events { worker_connections 8192; multi_accept on; }
+http {
+  access_log off;
+  error_log /dev/stderr warn;
+  server_tokens off;
+  sendfile on; tcp_nodelay on; tcp_nopush off;
+  keepalive_timeout 75s; keepalive_requests 10000;
+  client_max_body_size 0;
+  map $http_upgrade $conn_upgrade { default upgrade; '' close; }
+
+  server {
+    listen __PORT__ default_server reuseport backlog=4096;
+
+    location = /healthz { return 200 "ok\n"; }
+    location = /__sabigozar/off { return 404; }
+    location ^~ /__sabigozar/static/ { alias /opt/sabigozar/static/; expires 7d; add_header Cache-Control public; }
+
+    include /etc/nginx/sabigozar/routes.conf;
+
+    location / {
+      proxy_pass http://127.0.0.1:8000;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto https;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $conn_upgrade;
+      proxy_read_timeout 300s;
+    }
+  }
+}

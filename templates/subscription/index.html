@@ -1,0 +1,136 @@
+<!doctype html>
+{# SABIGOZAR subscription page · @SAHEBKARAMI · rendered by the panel (Jinja2) #}
+{% set st = user.status.value if user.status.value is defined else user.status %}
+{% set used = user.used_traffic or 0 %}
+{% set limit = user.data_limit or 0 %}
+{% set exp = (user.expire.timestamp()|int) if user.expire else 0 %}
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0b1020">
+<title>SABIGOZAR · {{ user.username|e }}</title>
+<link rel="icon" href="/statics/favicon/favicon.ico">
+<style>
+@font-face{font-family:Vazirmatn;src:url(https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/fonts/webfonts/Vazirmatn[wght].woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{--bg:#0b1020;--card:#121a33cc;--line:#ffffff14;--txt:#e8ecff;--mut:#9aa6d1;--acc:#22d3ee;--acc2:#6366f1;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;min-height:100vh;font-family:Vazirmatn,Tahoma,sans-serif;color:var(--txt);background:radial-gradient(1200px 600px at 100% -10%,#1e3a8a55,transparent),radial-gradient(900px 500px at -10% 110%,#0891b255,transparent),var(--bg)}
+.wrap{max-width:560px;margin:0 auto;padding:18px 14px 40px}
+header{display:flex;align-items:center;gap:12px;margin:6px 0 16px}
+header img{width:44px;height:44px;border-radius:12px}
+header h1{font-size:20px;margin:0;letter-spacing:1px}
+header small{color:var(--mut);display:block;font-size:12px}
+.card{background:var(--card);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px}
+.row{display:flex;align-items:center;gap:14px}
+.ring{width:132px;height:132px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring b{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px}
+.ring b small{font-size:11px;color:var(--mut);font-weight:400}
+.stats{flex:1;display:grid;gap:8px}
+.stat{display:flex;justify-content:space-between;font-size:14px;border-bottom:1px dashed var(--line);padding-bottom:6px}
+.stat span{color:var(--mut)}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700}
+.b-active{background:#22c55e22;color:var(--ok)}.b-limited,.b-expired,.b-disabled{background:#ef444422;color:var(--bad)}.b-on_hold{background:#f59e0b22;color:var(--warn)}
+.warn{background:#f59e0b18;border:1px solid #f59e0b55;color:#fde68a;border-radius:14px;padding:10px 12px;font-size:13px;margin-bottom:14px}
+h2{font-size:15px;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
+.btn{border:0;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#04121a;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:14px;padding:12px;width:100%}
+.btn.ghost{background:#ffffff0d;color:var(--txt);border:1px solid var(--line)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.apps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.app{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 4px;border-radius:14px;background:#ffffff08;border:1px solid var(--line);color:var(--txt);text-decoration:none;font-size:12px}
+.app i{font-style:normal;font-size:22px}
+.cfg{display:flex;align-items:center;gap:8px;padding:10px;border-radius:14px;background:#ffffff06;border:1px solid var(--line);margin-bottom:8px}
+.cfg .t{flex:1;min-width:0}.cfg .t b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cfg .t small{color:var(--mut);font-size:11px;direction:ltr;display:block;text-align:right}
+.ic{flex:none;width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:#ffffff0a;color:var(--txt);cursor:pointer;font-size:16px}
+#qrm{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:9;padding:20px}
+#qrm .box{background:#fff;border-radius:20px;padding:16px;text-align:center;max-width:340px;width:100%;color:#111}
+#qrm canvas{width:100%;height:auto;image-rendering:pixelated}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:#111827;border:1px solid var(--line);padding:10px 18px;border-radius:99px;font-size:13px;transition:.25s;z-index:10}
+#toast.on{transform:translateX(-50%) translateY(0)}
+.ping{font-size:13px;color:var(--mut);text-align:center;margin-top:8px;min-height:18px}
+footer{text-align:center;color:var(--mut);font-size:12px;margin-top:18px}
+footer a{color:var(--acc);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img src="/statics/favicon/logo-pwa.png" alt="SABIGOZAR"><div><h1>SABIGOZAR</h1><small>اشتراک <b>{{ user.username|e }}</b></small></div></header>
+
+  {% if announce %}<div class="warn">📣 {{ announce|e }}{% if announce_url %} · <a href="{{ announce_url|e }}" style="color:#fde68a">بیشتر</a>{% endif %}</div>{% endif %}
+  <div id="alerts"></div>
+
+  <div class="card">
+    <div class="row">
+      <div class="ring"><svg width="132" height="132" viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" stroke="#ffffff12" stroke-width="12" fill="none"/><circle id="arc" cx="66" cy="66" r="56" stroke="url(#g)" stroke-width="12" fill="none" stroke-linecap="round" stroke-dasharray="351.86" stroke-dashoffset="351.86" style="transition:stroke-dashoffset 1s"/><defs><linearGradient id="g"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs></svg><b><span id="pct">—</span><small>مصرف‌شده</small></b></div>
+      <div class="stats">
+        <div class="stat"><span>وضعیت</span><em class="badge b-{{ st|e }}" id="status">{{ st|e }}</em></div>
+        <div class="stat"><span>مصرف</span><b id="used">—</b></div>
+        <div class="stat"><span>باقی‌مانده</span><b id="left">—</b></div>
+        <div class="stat"><span>روز باقی‌مانده</span><b id="days">—</b></div>
+        <div class="stat"><span>انقضا</span><b id="exp">—</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🔗 لینک اشتراک</h2>
+    <div class="btns"><button class="btn" id="copysub">کپی لینک اشتراک</button><button class="btn ghost" id="qrsub">QR اشتراک</button></div>
+    <div class="btns" style="margin-top:8px"><button class="btn ghost" id="pingbtn">⚡ تست پینگ سرور</button><button class="btn ghost" id="copyall">کپی همه کانفیگ‌ها</button></div>
+    <div class="ping" id="ping"></div>
+  </div>
+
+  <div class="card"><h2>📲 اتصال با یک لمس</h2><div class="apps" id="apps"></div></div>
+
+  <div class="card"><h2><span>⚙️ کانفیگ‌ها</span><small id="cnt" style="color:var(--mut);font-weight:400"></small></h2><div id="cfgs"></div></div>
+
+  <a class="btn" style="display:block;text-align:center;text-decoration:none" href="https://t.me/SAHEBKARAMI" target="_blank" rel="noopener">💬 پشتیبانی و تمدید · @SAHEBKARAMI</a>
+  <footer>ساخته‌شده با ❤️ توسط <a href="https://t.me/SAHEBKARAMI">SABIGOZAR</a></footer>
+</div>
+<div id="qrm"><div class="box"><canvas id="qrc"></canvas><div id="qrt" style="font-size:13px;margin:8px 0"></div><div class="btns"><button class="btn" id="qrsave">ذخیره عکس</button><button class="btn ghost" style="color:#111" id="qrclose">بستن</button></div></div></div>
+<div id="toast"></div>
+<script src="/__sabigozar/static/qrcode.js"></script>
+<script>
+(function(){
+var D={used:{{ used|int }},limit:{{ limit|int }},exp:{{ exp }},status:{{ st|tojson }},links:{{ links|tojson }},name:{{ user.username|tojson }}};
+var $=function(i){return document.getElementById(i)};
+var SUB=location.origin+location.pathname.replace(/\/+$/,"");
+function fa(n,d){return Number(n).toLocaleString("fa-IR",{maximumFractionDigits:d===undefined?1:d})}
+function size(b){if(!b)return fa(0,0)+" بایت";var u=["بایت","KB","MB","GB","TB"],i=Math.min(4,Math.floor(Math.log(b)/Math.log(1024)));return fa(b/Math.pow(1024,i),i>2?2:0)+" "+u[i]}
+function jalali(gy,gm,gd){var g=[0,31,59,90,120,151,181,212,243,273,304,334],jy=gy<=1600?0:979;gy-=gy<=1600?621:1600;var gy2=gm>2?gy+1:gy,days=365*gy+Math.floor((gy2+3)/4)-Math.floor((gy2+99)/100)+Math.floor((gy2+399)/400)-80+gd+g[gm-1];jy+=33*Math.floor(days/12053);days%=12053;jy+=4*Math.floor(days/1461);days%=1461;if(days>365){jy+=Math.floor((days-1)/365);days=(days-1)%365}var jm=days<186?1+Math.floor(days/31):7+Math.floor((days-186)/30),jd=1+(days<186?days%31:(days-186)%30);return[jy,jm,jd]}
+var MON=["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+var STAT={active:"فعال",limited:"حجم تمام شد",expired:"منقضی شده",disabled:"غیرفعال",on_hold:"در انتظار اولین اتصال"};
+$("status").textContent=STAT[D.status]||D.status;
+$("used").textContent=size(D.used);
+if(D.limit>0){var p=Math.min(100,D.used/D.limit*100);$("pct").textContent=fa(p,0)+"٪";$("left").textContent=size(Math.max(0,D.limit-D.used));setTimeout(function(){$("arc").style.strokeDashoffset=351.86*(1-p/100)},60)}
+else{$("pct").textContent="∞";$("left").textContent="نامحدود";$("arc").style.strokeDashoffset=0}
+var alerts=[];
+if(D.exp>0){var d=new Date(D.exp*1000),j=jalali(d.getFullYear(),d.getMonth()+1,d.getDate()),left=Math.ceil((D.exp*1000-Date.now())/864e5);$("exp").textContent=fa(j[2],0)+" "+MON[j[1]-1]+" "+fa(j[0],0).replace(/٬/g,"");$("days").textContent=left>0?fa(left,0)+" روز":"تمام شده";if(left>0&&left<=3)alerts.push("⏳ فقط "+fa(left,0)+" روز از اشتراکت مانده؛ برای تمدید به @SAHEBKARAMI پیام بده.")}
+else{$("exp").textContent="بدون انقضا";$("days").textContent="∞"}
+if(D.limit>0&&D.used/D.limit>=.9)alerts.push("📉 بیش از ۹۰٪ حجمت مصرف شده.");
+if(D.status!=="active"&&D.status!=="on_hold")alerts.push("⛔ اشتراکت "+(STAT[D.status]||D.status)+" است؛ برای تمدید به @SAHEBKARAMI پیام بده.");
+$("alerts").innerHTML=alerts.map(function(a){return'<div class="warn">'+a+"</div>"}).join("");
+function toast(t){var e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(function(){e.classList.remove("on")},1800)}
+function copy(t){(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(function(){toast("کپی شد ✓")},function(){var a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();document.execCommand("copy");a.remove();toast("کپی شد ✓")})}
+var enc=encodeURIComponent(SUB),nm=encodeURIComponent("SABIGOZAR");
+var APPS=[["v2rayNG","v2rayng://install-config?url="+enc+"#SABIGOZAR","🤖"],["Hiddify","hiddify://import/"+SUB+"#SABIGOZAR","🦋"],["V2Box","v2box://install-sub?url="+enc+"&name="+nm,"📦"],["Streisand","streisand://import/"+SUB+"#SABIGOZAR","🍏"],["Happ","happ://add/"+SUB,"✨"],["NekoBox","sn://subscription?url="+enc+"&name="+nm,"🐱"],["Karing","karing://install-config?url="+enc+"&name="+nm,"🧭"],["FoXray","foxray://yiguo.dev/sub/add/?url="+enc+"#SABIGOZAR","🦊"],["Clash Meta","clash://install-config?url="+encodeURIComponent(SUB+"/clash_meta")+"&name="+nm,"🐈"]];
+$("apps").innerHTML=APPS.map(function(a){return'<a class="app" href="'+a[1].replace(/"/g,"&quot;")+'"><i>'+a[2]+"</i>"+a[0]+"</a>"}).join("");
+var links=(D.links||[]).filter(function(l){return/^[a-z0-9+.-]+:\/\//i.test(l)});
+$("cnt").textContent=fa(links.length,0)+" کانفیگ";
+function meta(l){var pr=(l.split("://")[0]||"").toUpperCase(),t="";var h=l.indexOf("#");if(h>-1){try{t=decodeURIComponent(l.slice(h+1))}catch(e){t=l.slice(h+1)}}if(pr==="VMESS"&&!t){try{t=JSON.parse(atob(l.slice(8))).ps}catch(e){}}var net=(/[?&]type=([^&#]+)/.exec(l)||[])[1]||"";return{t:t||pr,s:pr+(net?" · "+net:"")}}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return"&#"+c.charCodeAt(0)+";"})}
+$("cfgs").innerHTML=links.length?links.map(function(l,i){var m=meta(l);return'<div class="cfg"><div class="t"><b>'+esc(m.t)+"</b><small>"+esc(m.s)+'</small></div><button class="ic" data-q="'+i+'" title="QR">▦</button><button class="ic" data-c="'+i+'" title="کپی">⧉</button></div>'}).join(""):'<div class="cfg"><div class="t"><b>کانفیگی برای نمایش نیست</b><small>از لینک اشتراک در برنامه استفاده کن</small></div></div>';
+$("cfgs").onclick=function(e){var b=e.target.closest("button");if(!b)return;if(b.dataset.c)copy(links[+b.dataset.c]);if(b.dataset.q)qr(links[+b.dataset.q],meta(links[+b.dataset.q]).t)};
+function qr(text,title){if(typeof qrcode!=="function"){toast("QR در دسترس نیست");return}var q=qrcode(0,"M");q.addData(text,"Byte");q.make();var n=q.getModuleCount(),s=Math.max(4,Math.floor(720/(n+8))),c=$("qrc"),x=c.getContext("2d");c.width=c.height=(n+8)*s;x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.fillStyle="#0b1020";for(var r=0;r<n;r++)for(var k=0;k<n;k++)if(q.isDark(r,k))x.fillRect((k+4)*s,(r+4)*s,s,s);$("qrt").textContent=title;$("qrm").style.display="flex"}
+$("qrclose").onclick=function(){$("qrm").style.display="none"};
+$("qrm").onclick=function(e){if(e.target.id==="qrm")$("qrm").style.display="none"};
+$("qrsave").onclick=function(){var a=document.createElement("a");a.download="SABIGOZAR-"+D.name+".png";a.href=$("qrc").toDataURL("image/png");a.click()};
+$("copysub").onclick=function(){copy(SUB)};$("qrsub").onclick=function(){qr(SUB,"SABIGOZAR · "+D.name)};
+$("copyall").onclick=function(){copy(links.join("\n"))};
+$("pingbtn").onclick=function(){var out=$("ping"),r=[],i=0;out.textContent="در حال تست…";(function go(){var t=performance.now();fetch("/healthz?"+Math.random(),{cache:"no-store"}).then(function(){r.push(performance.now()-t)}).catch(function(){}).then(function(){if(++i<4)return go();if(!r.length){out.textContent="❌ سرور در دسترس نیست";return}if(r.length>1)r.shift();var a=r.reduce(function(x,y){return x+y},0)/r.length;out.innerHTML=(a<150?"🟢":a<350?"🟡":"🔴")+" پینگ تا سرور: <b>"+fa(a,0)+" ms</b>"})})()};
+})();
+</script>
+</body>
+</html>
