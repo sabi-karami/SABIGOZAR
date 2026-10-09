@@ -137,3 +137,126 @@ async function domains(inp, st, log) {
   if (!target) throw new StepError("Railway returned no CNAME target");
   return { railwayDomain: rd, tcp: `${t.domain.replace(/\.$/, "")}:${t.proxyPort}`, cname: target, txtHost: cd.status.verificationDnsHost || "", txtVal: cd.status.verificationToken || "" };
 }
+
+/* 6 · Cloudflare: proxied CNAME + verification TXT + SSL Full + WebSockets + stale records */
+async function upsert(T, zid, type, name, content, proxied, log) {
+  const recs = await cf(T, "GET", `/zones/${zid}/dns_records?per_page=100&name=${encodeURIComponent(name)}`);
+  if (type === "CNAME") for (const r of recs) if (r.type === "A" || r.type === "AAAA" || (r.type === "CNAME" && r.content !== content)) {
+    await cf(T, "DELETE", `/zones/${zid}/dns_records/${r.id}`); log(`Removed old ${r.type} ${name} → ${r.content}`, "warn");
+  }
+  const same = recs.find((r) => r.type === type && r.content.replace(/"/g, "") === content.replace(/"/g, ""));
+  if (same) {
+    if (proxied !== undefined && same.proxied !== proxied) { await cf(T, "PATCH", `/zones/${zid}/dns_records/${same.id}`, { proxied }); log(`${type} ${name}: proxy = ${proxied}`, "ok"); }
+    else log(`${type} ${name} already correct`);
+    return;
+  }
+  const body = { type, name, content, ttl: 1, comment: "SABIGOZAR panel (auto)" };
+  if (proxied !== undefined) body.proxied = proxied;
+  await cf(T, "POST", `/zones/${zid}/dns_records`, body);
+  log(`${type} ${name} → ${content.slice(0, 48)}${proxied ? " (proxied 🟠)" : ""}`, "ok");
+}
+async function setting(T, zid, key, good, want, log) {
+  const cur = (await cf(T, "GET", `/zones/${zid}/settings/${key}`)).value;
+  if (good.includes(cur)) { log(`${key} = ${cur} ✓`); return cur; }
+  await cf(T, "PATCH", `/zones/${zid}/settings/${key}`, { value: want }); log(`${key}: ${cur} → ${want}`, "ok"); return want;
+}
+async function cloudflare(inp, st, log) {
+  const T = inp.cfToken;
+  await upsert(T, st.zid, "CNAME", st.domain, st.cname, !inp.dnsOnly, log);
+  if (st.txtHost && st.txtVal) await upsert(T, st.zid, "TXT", st.txtHost.endsWith(st.zone) ? st.txtHost : `${st.txtHost}.${st.zone}`, st.txtVal, undefined, log);
+  const ssl = await setting(T, st.zid, "ssl", ["full", "strict"], "full", log);
+  const ws = await setting(T, st.zid, "websockets", ["on"], "on", log);
+  const deleted = [];
+  for (const n of String(inp.deleteDns || "").split(/[\s,]+/).map(cleanHost).filter(Boolean)) {
+    if (n === st.domain || n === st.panelHost) { log(`Skipped deleting ${n} (in use)`, "warn"); continue; }
+    for (const r of await cf(T, "GET", `/zones/${st.zid}/dns_records?per_page=100&name=${encodeURIComponent(n)}`)) {
+      await cf(T, "DELETE", `/zones/${st.zid}/dns_records/${r.id}`); deleted.push(`${r.type} ${r.name}`); log(`Deleted ${r.type} ${r.name} → ${r.content}`, "ok");
+    }
+  }
+  return { ssl, ws, deleted };
+}
+
+/* 7 · redeploy with the newest commit */
+async function deploy(inp, st, log) {
+  const T = inp.railwayToken;
+  const r = await gql(T, `mutation{ serviceInstanceDeploy(environmentId:"${st.eid}", serviceId:"${st.sid}", latestCommit:true) }`, {}, true);
+  if (r.errors) { await gql(T, `mutation{ serviceInstanceRedeploy(environmentId:"${st.eid}", serviceId:"${st.sid}") }`); log("Redeploy started", "ok"); }
+  else log("Deploy of the latest commit started", "ok");
+  await sleep(4000);
+  return { deployStart: Date.now() };
+}
+
+/* 8 · poll until SUCCESS (the page calls this repeatedly) */
+async function wait(inp, st, log) {
+  const T = inp.railwayToken;
+  const d = await gql(T, `query{ deployments(first:1, input:{serviceId:"${st.sid}"}){ edges { node { id status createdAt meta } } } }`);
+  const n = edges(d.deployments)[0];
+  if (!n) { log("Waiting for Railway to create the deployment…"); return { done: false }; }
+  const c = n.meta && n.meta.commitHash ? n.meta.commitHash.slice(0, 7) : "";
+  log(`Deployment ${n.id.slice(0, 8)} · ${n.status}${c ? " · commit " + c : ""}`);
+  if (["FAILED", "CRASHED"].includes(n.status)) throw new StepError(`Deployment ${n.status}: open Railway → Deployments → View Logs`);
+  if (n.status !== "SUCCESS") return { done: false };
+  const dq = await gql(T, DOMQ, ids(st));
+  const c2 = dq.domains.customDomains.find((x) => x.domain === st.domain);
+  const ok = c2 && c2.status.verified && /VALID/.test(c2.status.certificateStatus || "");
+  if (!ok) { log(`Deployed. Waiting for ${st.domain} verification + certificate (DNS can take a few minutes)…`); return { done: false, depId: n.id }; }
+  const l = await gql(T, `query{ deploymentLogs(deploymentId:"${n.id}", limit:1000){ message } }`, {}, true);
+  const lines = ((l.data && l.data.deploymentLogs) || []).map((x) => x.message);
+  const cfg = [...lines].reverse().find((x) => /configs ready/.test(x)) || "";
+  if (!cfg && Date.now() - (st.deployStart || 0) < 240000) { log("Panel is booting (configs not ready yet)…"); return { done: false, depId: n.id }; }
+  if (cfg) log(cfg.replace("[SABIGOZAR] ", ""), "ok");
+  log(`${st.domain}: verified, certificate valid`, "ok");
+  return { done: true, depId: n.id, deployedCommit: c, configsLine: cfg.replace("[SABIGOZAR] ", "") };
+}
+
+/* 9 · end-to-end test through Cloudflare */
+async function verify(inp, st, log) {
+  const B = `https://${st.domain}`;
+  const h = await fetch(B + "/healthz", { cf: { cacheTtl: 0 } });
+  log(`healthz ${h.status} · served by ${h.headers.get("server") || "?"}`, h.status === 200 ? "ok" : "err");
+  if (h.status !== 200) throw new StepError("panel not reachable on " + st.domain);
+  const lr = await fetch(B + "/api/admin/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ username: st.adminUser, password: st.adminPass }) });
+  const tok = lr.ok ? (await lr.json()).access_token : null;
+  log(tok ? "Owner login ✓" : `Owner login failed (${lr.status})`, tok ? "ok" : "err");
+  if (!tok) throw new StepError("owner login failed: check ADMIN_PASSWORD in Railway Variables");
+  const H = { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" };
+  const tl = await (await fetch(B + "/api/user_templates", { headers: H })).json().catch(() => []);
+  const list = Array.isArray(tl) ? tl : tl.user_templates || tl.templates || [];
+  log(`Sale templates: ${list.length}`, list.length ? "ok" : "warn");
+  const keep = cleanHost(inp.testUser || "").replace(/[^a-z0-9_]/gi, "");
+  const name = keep || `paneltest${Date.now() % 100000}`;
+  const tpl = list.find((t) => /تست|test/i.test(t.name || ""));
+  const cr = tpl
+    ? await fetch(B + "/api/user/from_template", { method: "POST", headers: H, body: JSON.stringify({ user_template_id: tpl.id, username: name }) })
+    : await fetch(B + "/api/user", { method: "POST", headers: H, body: JSON.stringify({ username: name, data_limit: 1073741824, expire: Math.floor(Date.now() / 1000) + 86400, status: "active", proxy_settings: {} }) });
+  if (cr.status >= 300) throw new StepError(`test user failed (${cr.status}): ${(await cr.text()).slice(0, 160)}`);
+  log(`Test user «${name}» created${tpl ? " from «" + tpl.name + "»" : ""}`, "ok");
+  let sub = "", names = [];
+  for (let i = 0; i < 8 && !names.length; i++) {
+    await sleep(4000);
+    const u = await (await fetch(B + `/api/user/${name}`, { headers: H })).json().catch(() => ({}));
+    sub = u.subscription_url ? (u.subscription_url.startsWith("/") ? B + u.subscription_url : u.subscription_url) : "";
+    if (!sub) continue;
+    const raw = (await (await fetch(sub + "/links", { headers: { "User-Agent": "v2rayNG/1.8.5" } })).text()).trim();
+    names = raw.split(/\s+/).filter((l) => l.includes("://")).map((l) => {
+      if (l.startsWith("vmess://")) { try { return JSON.parse(atob(l.slice(8))).ps || "vmess"; } catch { return "vmess"; } }
+      try { return decodeURIComponent(l.split("#")[1] || l.split("://")[0]); } catch { return l.split("://")[0]; }
+    });
+  }
+  log(`Subscription: ${names.length} configs`, names.length ? "ok" : "err");
+  names.forEach((n) => log("   " + n));
+  const page = sub ? await fetch(sub, { headers: { Accept: "text/html", "User-Agent": "Mozilla/5.0" } }) : null;
+  const pageOk = !!page && page.ok && /SABIGOZAR/.test(await page.text());
+  log(pageOk ? "Subscription web page ✓" : "Subscription web page did not load", pageOk ? "ok" : "warn");
+  if (!keep) { await fetch(B + `/api/user/${name}`, { method: "DELETE", headers: H }); log(`Temporary user «${name}» removed`); }
+  return { configs: names, testUser: keep ? name : "", testSub: keep ? sub : "", pageOk, verified: names.length > 0 };
+}
+
+/* 10 · final report */
+async function report(inp, st, log) {
+  log("Report ready", "ok");
+  return { finished: new Date().toISOString() };
+}
+
+export const STEPS = { check, github, railway, settings, domains, cloudflare, deploy, wait, verify, report };
+export const ORDER = ["check", "github", "railway", "settings", "domains", "cloudflare", "deploy", "wait", "verify", "report"];
