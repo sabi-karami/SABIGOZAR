@@ -43,6 +43,7 @@ python3 tools/deploy.py \
 | گزینه | کار |
 |---|---|
 | `--region` | منطقه‌ی سرور. پیش‌فرض `europe-west4-drams3a` (هلند) که از ایران پینگ بهتری دارد. |
+| `--admin-username` | نام کاربری مالک (پیش‌فرض `sabigozar`). رمز قوی خودکار ساخته و در **Variables ← ADMIN_PASSWORD** گذاشته می‌شود؛ با آیکون چشم ببینش. |
 | `--clean-ips` | IPهای تمیز Cloudflare برای ساخت کانفیگ‌های ☁️ CDN. |
 | `--var KEY=VALUE` | هر متغیر دیگر (مثل `REALITY_SNI=www.microsoft.com`). برای رمز و توکن، مستقیم در Variables خود Railway بگذار. |
 | `--delete-dns NAME` | پاک کردن رکوردهای قدیمی یک اسم (مثلاً ساب‌دامینی که به پروژه‌ی پاک‌شده‌ی Railway اشاره می‌کند). |
@@ -84,7 +85,7 @@ python3 tools/deploy.py \
 |---|---|---|
 | 1 | ساخت پروژه `SABIGOZAR` | **New Project** |
 | 2 | ساخت سرویس `sabigozar` از ریپوی GitHub | **Deploy from GitHub repo** |
-| 3 | متغیرها: `PUBLIC_DOMAIN=panel.example.com`، `PORT=8080` و (اختیاری) `CLEAN_IPS` | **Variables** |
+| 3 | متغیرها: `PUBLIC_DOMAIN=panel.example.com`، `PORT=8080`، `ADMIN_USERNAME`، `ADMIN_PASSWORD` (رمز قوی) و (اختیاری) `CLEAN_IPS` | **Variables** |
 | 4 | Volume روی مسیر `/var/lib/sabigozar` | کلیک راست روی سرویس ← **Attach Volume** |
 | 5 | Healthcheck Path = `/healthz`، Timeout = `300` | **Settings ← Deploy** |
 | 6 | Restart Policy = **Always** | **Settings ← Deploy** |
