@@ -130,6 +130,8 @@ SABIGOZAR یک پنل کامل مدیریت کاربر و نمایندگی اس�
 
 نصب حدود ۱۰ دقیقه طول می‌کشد.
 
+> **⚡ نصب خودکار با یک دستور:** اگر دامنه‌ات روی Cloudflare است، اسکریپت [`tools/deploy.py`](tools/deploy.py) همه‌ی قدم‌های زیر را انجام می‌دهد: پروژه، Volume، Health Check، Restart Policy، منطقه‌ی اروپا، TCP Proxy، دامنه‌ی شخصی، رکوردهای Cloudflare، Redeploy و تست کامل. راهنمای کامل: [docs/DEPLOY-AUTOMATION.md](docs/DEPLOY-AUTOMATION.md)
+
 ### قدم ۱: ریپو را در GitHub خودت داشته باش
 - اگر این ریپو در اکانت خودت است، برو قدم ۲.
 - اگر نه، بالای همین صفحه **Fork** را بزن تا یک کپی در اکانت خودت ساخته شود.
@@ -144,6 +146,14 @@ SABIGOZAR یک پنل کامل مدیریت کاربر و نمایندگی اس�
 بدون Volume، **با هر Deploy همه‌ی کاربرها، رمز و کلیدها پاک می‌شوند.**
 1. روی سرویس کلیک راست کن ← **Attach Volume**. یا از منوی بالا: **+ Create ← Volume**.
 2. **Mount path** را دقیقاً بنویس: `/var/lib/sabigozar`
+
+### قدم ۳.۵: تنظیمات سرویس (مهم)
+Railway دیگر فایل `railway.json` را برای سرویس‌های جدید اعمال نمی‌کند. پس این‌ها را دستی بگذار:
+1. **Settings ← Deploy ← Healthcheck Path**: `/healthz` و Timeout: `300`
+2. **Settings ← Deploy ← Restart Policy**: **Always**
+3. **Settings ← Build ← Dockerfile Path**: `Dockerfile`
+
+بدون این‌ها اگر سرویس چند بار پشت سر هم کرش کند، دیگر خودش بالا نمی‌آید.
 
 ### قدم ۴: ساخت دامنه
 1. سرویس را باز کن ← **Settings ← Networking ← Public Networking**
@@ -177,7 +187,7 @@ SABIGOZAR یک پنل کامل مدیریت کاربر و نمایندگی اس�
 
 🎉 تمام! با این آدرس، نام کاربری و رمز وارد پنل شو.
 
-> **منطقه (Region):** در **Settings ← Deploy ← Region** نزدیک‌ترین منطقه به کاربرانت را انتخاب کن. برای ایران معمولاً اروپا پینگ بهتری می‌دهد. بهتر است چند منطقه را امتحان کنی.
+> **منطقه (Region):** پیش‌فرض Railway آمریکاست. در **Settings ← Deploy ← Regions** منطقه‌ی **EU West (Amsterdam)** را انتخاب کن؛ از ایران پینگ خیلی بهتری دارد. Volume هم خودکار با سرویس منتقل می‌شود. (اسکریپت `tools/deploy.py` این را خودکار انجام می‌دهد.)
 
 ---
 
@@ -287,17 +297,29 @@ TELEGRAM_ADMIN_ID=123456789
 
 ## ☁️ دامنه‌ی شخصی و Cloudflare
 
-1. Railway ← **Networking ← Custom Domain** ← دامنه‌ات را بنویس، مثلاً `panel.example.com`
-2. Railway یک رکورد **CNAME** می‌دهد. آن را در DNS دامنه‌ات بساز.
-3. در Variables بگذار: `PUBLIC_DOMAIN=panel.example.com`
-4. **Redeploy**
+> اسکریپت [`tools/deploy.py`](tools/deploy.py) همه‌ی این بخش را خودکار انجام می‌دهد. جزئیات: [docs/DEPLOY-AUTOMATION.md](docs/DEPLOY-AUTOMATION.md)
 
-**پشت Cloudflare (ابر نارنجی):**
-- در Cloudflare: **SSL/TLS ← Full** و **Network ← WebSockets: On**
-- برای ساخت کانفیگ روی IPهای تمیز Cloudflare، بنویس: `CLEAN_IPS=104.16.1.1,172.67.1.1`. برای هر IP یک کانفیگ **☁️ CDN** ساخته می‌شود.
-- Reality پشت Cloudflare کار **نمی‌کند**. آن مستقیم از TCP Proxy وصل می‌شود.
+**در Railway:**
+1. **Settings ← Networking ← Custom Domain** ← دامنه را بنویس، مثلاً `panel.example.com`، با پورت **`8080`**.
+2. Railway دو رکورد می‌دهد:
+   - **CNAME**: `panel` ← یک آدرس اختصاصی مثل `abcd1234.up.railway.app` (با دامنه‌ی Generate‌شده‌ی سرویس فرق دارد)
+   - **TXT**: `_railway-verify.panel` ← `railway-verify=...` (تأیید مالکیت)
+3. در Variables بگذار: `PUBLIC_DOMAIN=panel.example.com`
+4. اگر خطای `Not available` یا `Failed to create custom domain` گرفتی، این دامنه هنوز به یک پروژه‌ی دیگر Railway وصل است. آنجا پاکش کن یا ساب‌دامین دیگری بگذار.
+
+**در Cloudflare:**
+1. **DNS ← Records**: رکورد CNAME را با **Proxied (ابر نارنجی)** و رکورد TXT را بساز. اگر برای همین اسم رکورد A/AAAA/CNAME قدیمی هست، پاکش کن.
+2. **SSL/TLS ← Overview ← Full** (نه Flexible؛ Railway خودش HTTPS دارد).
+3. **Network ← WebSockets: On**
+4. در Railway **Redeploy** بزن. بعد از چند دقیقه کنار دامنه تیک سبز می‌آید و در لاگ می‌بینی: `configs ready on panel.example.com`
+5. تست: `https://panel.example.com/healthz` باید `ok` بدهد و هدر پاسخ `server: cloudflare` باشد.
+
+**نکته‌ها:**
+- برای ساخت کانفیگ روی IPهای تمیز Cloudflare بنویس: `CLEAN_IPS=104.16.1.1,172.67.1.1`. برای هر IP یک کانفیگ **☁️ CDN** ساخته می‌شود. IP تمیز به اپراتور بستگی دارد؛ اگر کند بود، با یک اسکنر IP تمیز عوضش کن.
+- Reality پشت Cloudflare کار **نمی‌کند**. آن مستقیم از TCP Proxy خود Railway وصل می‌شود.
 
 ---
+
 
 ## 📝 همه‌ی متغیرها
 
@@ -371,6 +393,12 @@ TELEGRAM_ADMIN_ID=123456789
 | بعد از Redeploy کاربرها پاک شدند | Volume وصل نبود یا مسیرش اشتباه بود. مسیر باید `/var/lib/sabigozar` باشد. |
 | ربات پیام نمی‌دهد | ۱) به ربات Start زده باشی. ۲) `TELEGRAM_ADMIN_ID` عدد باشد. ۳) توکن درست باشد. |
 | در لاگ: `node status = ...` | Watchdog خودش دوباره وصل می‌کند. اگر ادامه داشت، Redeploy کن. |
+| Custom Domain: `Not available` | دامنه هنوز به پروژه‌ی دیگری در Railway وصل است. آنجا پاکش کن یا ساب‌دامین دیگر بگذار. |
+| دامنه‌ی شخصی تأیید نمی‌شود | رکورد TXT `_railway-verify.<ساب‌دامین>` را بساز. CNAME باید به آدرس اختصاصی‌ای که Railway برای همان دامنه داده اشاره کند. |
+| `ERR_TOO_MANY_REDIRECTS` یا خطای 525 | در Cloudflare، SSL/TLS را روی **Full** بگذار. |
+| کانفیگ‌های WS پشت Cloudflare وصل نمی‌شوند | در Cloudflare، **Network ← WebSockets** را روشن کن. |
+| Health Check یا Restart Policy اعمال نشده | Railway فایل `railway.json` را برای سرویس جدید نمی‌خواند. [قدم ۳.۵](#-نصب-قدمبهقدم-روی-railway) را انجام بده. |
+| `Free plan resource provision limit exceeded` | سقف منابع پلن رایگان پر شده. پروژه‌های بلااستفاده را پاک کن یا پلن را ارتقا بده. |
 | سرویس ناگهان خاموش شد | ممکن است Railway آن را طبق قوانینش غیرفعال کرده باشد. ایمیل‌هایت را بررسی کن. |
 
 برای کمک بیشتر: [@SAHEBKARAMI](https://t.me/SAHEBKARAMI)
@@ -384,6 +412,9 @@ TELEGRAM_ADMIN_ID=123456789
 
 **چند کاربر را تحمل می‌کند؟**
 به پلن Railway و مصرف کاربرها بستگی دارد. دیتابیس SQLite است و برای چند صد کاربر کافی است.
+
+**چرا نام کاربری و رمز در Variables نیست؟**
+Variables فقط ورودی سرویس است و برنامه نمی‌تواند در آن بنویسد. رمز تصادفی روی Volume ذخیره می‌شود و در لاگ Deploy چاپ می‌شود. اگر می‌خواهی در Variables ببینی‌اش، `ADMIN_PASSWORD` را بگذار و Redeploy کن.
 
 **می‌توانم روی VPS نصب کنم؟**
 این بسته برای Railway طراحی شده. Railway جلوی سرویس TLS می‌گذارد، ولی روی VPS خودت باید یک Reverse Proxy با TLS (مثل Caddy) جلوی پورت 8080 بگذاری. Reality روی VPS با باز کردن پورت 8443 کار می‌کند.

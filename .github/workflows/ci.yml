@@ -16,6 +16,7 @@ jobs:
         run: |
           python3 -m py_compile scripts/*.py tools/*.py tests/*.py
           bash -n entrypoint.sh scripts/*.sh
+          python3 tools/deploy.py --help > /dev/null
 
       - name: Build Docker image
         run: docker build -t sabigozar:test .
