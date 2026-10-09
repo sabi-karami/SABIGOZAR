@@ -4,6 +4,7 @@
 // Tokens arrive per request and are never stored or logged.
 import { STEPS } from "./steps.js";
 import HTML from "./ui.js";
+import APP from "./app.js";
 
 const SEC = { "X-Frame-Options": "DENY", "Referrer-Policy": "no-referrer", "X-Content-Type-Options": "nosniff", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" };
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { "Content-Type": "application/json; charset=utf-8", ...SEC } });
@@ -21,6 +22,8 @@ export default {
     const u = new URL(req.url);
     if (req.method === "GET" && (u.pathname === "/" || u.pathname === "/index.html"))
       return new Response(HTML, { headers: { "Content-Type": "text/html; charset=utf-8", ...SEC } });
+    if (req.method === "GET" && u.pathname === "/app.js")
+      return new Response(APP, { headers: { "Content-Type": "application/javascript; charset=utf-8", ...SEC } });
     if (u.pathname === "/healthz") return new Response("ok\n", { headers: SEC });
     const m = u.pathname.match(/^\/api\/([a-z]+)$/);
     if (!m || req.method !== "POST") return json({ ok: false, error: "not found" }, 404);
