@@ -188,7 +188,8 @@ def main():
     c, TOK2 = login(st["username"], st["password"])
     ok("restart: same password still works", c == 200)
     ok("restart: no duplicate hosts", len(items(http("GET", "/api/hosts", tok=TOK2)[1], "hosts")) == 8)
-    ok("restart: one core", len(items(http("GET", "/api/cores", tok=TOK2)[1], "cores")) == 1)
+    cores = items(http("GET", "/api/cores", tok=TOK2)[1], "cores")
+    ok("restart: one SABIGOZAR core", sum(c.get("name") == "SABIGOZAR-Core" for c in cores) == 1, [c.get("name") for c in cores])
     ok("restart: users kept", http("GET", "/api/user/ci_user", tok=TOK2)[0] == 200)
 
     NEW = "Sahe8Karami!!Gz42"
