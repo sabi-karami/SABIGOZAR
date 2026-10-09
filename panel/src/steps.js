@@ -49,10 +49,17 @@ async function github(inp, st, log) {
   }
   const info = await gh(inp.ghToken, "GET", `/repos/${repo}`);
   if (info.status !== 200) throw new StepError(`repo ${repo} not found for this token`);
-  if (info.j.fork) {
-    const s = await gh(inp.ghToken, "POST", `/repos/${repo}/merge-upstream`, { branch: info.j.default_branch });
-    if (s.status === 200) log(`Fork synced with upstream: ${s.j.message || "up to date"}`, "ok");
-    else log(`Could not sync fork (${s.status}: ${s.j.message || ""}). Press «Sync fork» on GitHub.`, "warn");
+  if (info.j.fork && info.j.parent) {
+    const br = info.j.default_branch, up = info.j.parent;
+    const cmp = await gh(inp.ghToken, "GET", `/repos/${repo}/compare/${br}...${up.owner.login}:${up.name}:${up.default_branch}`);
+    const behind = cmp.status === 200 ? cmp.j.ahead_by : -1;
+    if (behind === 0) log(`Fork is up to date with ${up.full_name} ✓`, "ok");
+    else {
+      const s = await gh(inp.ghToken, "POST", `/repos/${repo}/merge-upstream`, { branch: br });
+      if (s.status === 200) log(`Fork synced with ${up.full_name}${behind > 0 ? " (" + behind + " new commits)" : ""} ✓`, "ok");
+      else if (s.status === 403) throw new StepError(`Fork is ${behind > 0 ? behind + " commits" : ""} behind ${up.full_name} and this GitHub token cannot update it. Give the token «Contents: Read and write» on ${repo}, or press «Sync fork» on GitHub, then run again.`);
+      else log(`Could not sync fork (${s.status}: ${s.j.message || ""}). Press «Sync fork» on GitHub.`, "warn");
+    }
   } else log(`Repo ${repo} (not a fork, nothing to sync)`, "ok");
   const head = await gh(inp.ghToken, "GET", `/repos/${repo}/commits/${info.j.default_branch}`);
   return { repo, commit: head.status === 200 ? head.j.sha.slice(0, 7) : "" };
