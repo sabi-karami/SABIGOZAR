@@ -132,3 +132,161 @@ code{direction:ltr;unicode-bidi:isolate;background:var(--card);padding:1px 6px;b
 @media print{.bg,.tools,.btns,.ov,.toast,.top-btn,.tb,.os,.x{display:none!important}.card{box-shadow:none}}
 </style>
 </head>
+<body>
+<div class="bg" aria-hidden="true"><i></i><i></i></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11.5" height="11.5" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="i-qr" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM18 14h2.5M14 18v2.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M3 13l9 5 9-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+<symbol id="i-touch" viewBox="0 0 24 24"><path d="M9 11V5.5a2 2 0 0 1 4 0V11m0-1.5a2 2 0 0 1 4 0V12m0-1a2 2 0 0 1 3 1.7V15a7 7 0 0 1-7 7h-1a7 7 0 0 1-5.6-2.8L4 16.5a2 2 0 0 1 3.2-2.4L9 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4 20a2 2 0 0 0 2 1h13v-3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11m0 0l-4.5-4.5M12 15l4.5-4.5M5 20h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4.5h-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v5.5M12 7.5v.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+<symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8 4v5h7V4M8 20v-6h8v6" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="i-lang" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" stroke="currentColor" stroke-width="2"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.5 9h17M3.5 15h17M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" fill="none" stroke="currentColor" stroke-width="1.8"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+<symbol id="i-tg" viewBox="0 0 24 24"><path d="M21.5 4.3L2.9 11.5c-1.1.4-1.1 1.1-.2 1.4l4.7 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.4l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.7c.3-1.3-.5-1.9-1.3-1.5zM8.6 14.2l9.4-5.9c.4-.3.9-.1.5.2l-8 7.3-.3 3.4-1.6-5z" fill="currentColor"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.6-3.3 8.3-8 9-4.7-.7-8-4.4-8-9V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.5 12l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</defs></svg>
+
+<main class="wrap" id="top">
+  <header class="hd">
+    <div class="brand">
+      <div class="logo"><img src="/statics/favicon/logo.png" alt="" onerror="this.remove()"><svg width="24" height="24"><use href="#i-shield"/></svg></div>
+      <div>
+        <h1 data-t="title"></h1>
+        <div class="meta">
+          <span class="u ltr" id="uname" title="copy"></span>
+          <span class="o" id="onl"><i></i><span id="onlT"></span></span>
+          <button type="button" class="ib sm" id="pingB" aria-label="Ping"><svg width="14" height="14"><use href="#i-refresh"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="tools">
+      <button type="button" class="ib" id="privB" aria-label="Privacy"><svg width="16" height="16"><use href="#i-eye"/></svg></button>
+      <button type="button" class="ib" id="langB" aria-label="Language"><svg width="16" height="16"><use href="#i-lang"/></svg></button>
+      <button type="button" class="ib" id="themeB" aria-label="Theme"><svg width="16" height="16" id="themeI"><use href="#i-moon"/></svg></button>
+      <button type="button" class="ib" id="reloadB" aria-label="Reload"><svg width="16" height="16"><use href="#i-refresh"/></svg></button>
+    </div>
+  </header>
+
+  <div class="note bad hide" id="offl"><svg width="18" height="18"><use href="#i-info"/></svg><span data-t="offline"></span></div>
+  <div id="notes"></div>
+
+  <section class="top">
+    <div class="card st" id="stc">
+      <div class="sth">
+        <div><div class="stt"><span id="stT"></span><i></i></div><div class="lab" data-t="stLbl"></div></div>
+        <div class="ein"><b data-t="expIn"></b><div class="cd" id="cd"></div></div>
+      </div>
+      <div class="stb">
+        <div class="ring"><svg class="dsh" viewBox="0 0 128 128" aria-hidden="true"><g class="orb"><circle cx="64" cy="64" r="59" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="14 8 4 8"/><circle cx="64" cy="5" r="3.6" fill="currentColor"/></g></svg><svg viewBox="0 0 100 100"><circle class="tk" cx="50" cy="50" r="40" fill="none" stroke-width="8"/><circle class="br" id="ringB" cx="50" cy="50" r="40" fill="none" stroke-width="8"/></svg>
+          <div class="mid"><div><b id="pct" class="ltr">0%</b><small id="pctL"></small></div></div></div>
+        <div class="rows">
+          <div class="rw"><span data-t="sUsed"></span><b id="vU" class="ltr"></b></div>
+          <div class="rw"><span data-t="sAll"></span><b id="vA" class="ltr"></b></div>
+          <div class="rw g"><span data-t="sLeft"></span><b id="vL" class="ltr"></b></div>
+          <div class="bar"><i id="barI"></i></div>
+          <div class="lab" id="rst"></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="card sc"><div class="lab" data-t="exp"></div><b class="v d" id="expD"></b><span class="lab ltr" id="expG"></span></div>
+      <div class="card sc"><div class="lab" data-t="pingT"></div><b class="v ltr" id="pms">--<small>ms</small></b><span class="lab" id="pq"></span></div>
+      <div class="card sc"><div class="lab" data-t="cfgT"></div><b class="v ltr" id="cfgC">0</b><span class="lab" id="cfgP"></span></div>
+    </div>
+  </section>
+
+  <section class="grid4">
+    <div class="card mini"><span class="lab" data-t="avg"></span><b class="ltr" id="avgD">—</b></div>
+    <div class="card mini"><span class="lab" data-t="est"></span><b id="estD">—</b></div>
+    <div class="card mini"><span class="lab" data-t="life"></span><b class="ltr" id="lifeD">—</b></div>
+    <div class="card mini"><span class="lab" data-t="since"></span><b id="sinceD">—</b></div>
+  </section>
+
+  <div class="main">
+    <section class="card">
+      <div class="h"><svg width="16" height="16"><use href="#i-link"/></svg><span data-t="subH"></span></div>
+      <div class="lnk" id="subL"><svg width="15" height="15"><use href="#i-copy"/></svg><span class="ltr" id="subT"></span></div>
+      <div class="btns">
+        <button type="button" class="btn" id="cpSub"><svg width="15" height="15"><use href="#i-copy"/></svg><span data-t="copy"></span></button>
+        <button type="button" class="btn gh" id="qrSub"><svg width="15" height="15"><use href="#i-qr"/></svg><span data-t="qr"></span></button>
+        <button type="button" class="btn gh" id="shSub"><svg width="15" height="15"><use href="#i-share"/></svg><span data-t="share"></span></button>
+        <button type="button" class="btn gh" id="cpAll"><svg width="15" height="15"><use href="#i-layers"/></svg><span data-t="copyAll"></span></button>
+      </div>
+      <div class="btns" style="grid-template-columns:repeat(3,1fr)">
+        <button type="button" class="btn gh" data-fmt="clash_meta"><span>Clash Meta</span></button>
+        <button type="button" class="btn gh" data-fmt="sing_box"><span>sing-box</span></button>
+        <button type="button" class="btn gh" id="dlTxt"><svg width="15" height="15"><use href="#i-down"/></svg><span data-t="dl"></span></button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="h"><svg width="16" height="16"><use href="#i-touch"/></svg><span data-t="appsH"></span></div>
+      <div class="os" id="os"></div>
+      <div class="apps" id="apps"></div>
+    </section>
+
+    <section class="card full">
+      <div class="h"><svg width="16" height="16"><use href="#i-layers"/></svg><span data-t="cfgH"></span><span class="sp"></span><small id="cfgN" class="ltr"></small></div>
+      <div class="tb"><input class="srch" id="q" type="search" autocomplete="off"><div class="os" id="flt" style="margin:0"></div></div>
+      <div id="cfgs"></div>
+    </section>
+
+    <section class="card">
+      <div class="h"><svg width="16" height="16"><use href="#i-globe"/></svg><span data-t="netH"></span><span class="sp"></span><button type="button" class="ib sm" id="netB"><svg width="14" height="14"><use href="#i-refresh"/></svg></button></div>
+      <div class="netg">
+        <div><span class="lab" data-t="ip"></span><b class="ltr" id="nIp">…</b></div>
+        <div><span class="lab" data-t="cty"></span><b id="nCt">…</b></div>
+        <div><span class="lab" data-t="isp"></span><b id="nIsp">…</b></div>
+        <div><span class="lab" data-t="conn"></span><b id="nCn">…</b></div>
+      </div>
+      <div class="vpn hide" id="vpn"><svg width="16" height="16"><use href="#i-shield"/></svg><span id="vpnT"></span></div>
+      <div class="lab" style="margin-top:10px" data-t="pingHist"></div>
+      <svg class="spark" id="spark" viewBox="0 0 200 46" preserveAspectRatio="none"><path id="sparkP" d=""/></svg>
+    </section>
+
+    <section class="card">
+      <div class="h"><svg width="16" height="16"><use href="#i-book"/></svg><span data-t="helpT"></span></div>
+      <div id="help"></div>
+    </section>
+
+    <div class="grid3 full" style="grid-template-columns:1fr 1fr">
+      <a class="card tgc" href="https://t.me/SAHEBKARAMI" target="_blank" rel="noopener">
+        <span class="ti"><svg width="22" height="22"><use href="#i-tg"/></svg></span>
+        <div><b data-t="supT"></b><small class="ltr">@SAHEBKARAMI</small></div>
+        <svg class="go fl" width="18" height="18"><use href="#i-arrow"/></svg>
+      </a>
+      <a class="card tgc" id="renew" href="https://t.me/SAHEBKARAMI" target="_blank" rel="noopener">
+        <span class="ti" style="background:var(--pri)"><svg width="22" height="22"><use href="#i-refresh"/></svg></span>
+        <div><b data-t="renT"></b><small data-t="renS"></small></div>
+        <svg class="go fl" width="18" height="18"><use href="#i-arrow"/></svg>
+      </a>
+    </div>
+  </div>
+
+  <div class="foot"><span data-t="upd"></span> <b class="ltr" id="updT"></b><br><span data-t="keys"></span><br>Powered by <b>SABIGOZAR</b> · <a href="https://t.me/SAHEBKARAMI" target="_blank" rel="noopener">@SAHEBKARAMI</a></div>
+</main>
+
+<button type="button" class="ib top-btn" id="toTop" aria-label="Top"><svg width="16" height="16"><use href="#i-up"/></svg></button>
+<div class="ov" id="ov" aria-hidden="true"><div class="sheet" role="dialog" aria-modal="true">
+  <h3 id="shT"></h3>
+  <div class="qr"><canvas id="qrc" width="500" height="500"></canvas></div>
+  <div class="two"><button type="button" class="btn" id="shCp"><svg width="15" height="15"><use href="#i-copy"/></svg><span data-t="copy"></span></button><button type="button" class="btn gh" id="shSave"><svg width="15" height="15"><use href="#i-save"/></svg><span data-t="save"></span></button></div>
+  <button type="button" class="btn gh" id="shX" style="width:100%;margin-top:8px"><svg width="15" height="15"><use href="#i-x"/></svg><span data-t="close"></span></button>
+</div></div>
+<div class="toast" id="toast"><span class="o"><svg width="14" height="14"><use href="#i-ok"/></svg></span><span id="toastT"></span></div>
+<script src="/__sabigozar/static/qrcode.js"></script>
