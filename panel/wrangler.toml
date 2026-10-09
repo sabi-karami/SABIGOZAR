@@ -1,0 +1,10 @@
+name = "sabigozar-panel"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+workers_dev = false
+
+[[routes]]
+pattern = "vpn.example.com"
+custom_domain = true
+
+# Set the panel password once:  npx wrangler secret put PANEL_PASSWORD
