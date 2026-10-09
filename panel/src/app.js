@@ -31,7 +31,7 @@ running=true;ST={panelHost:location.hostname};LOG=[];$("log").innerHTML="";$("go
 var state={},skip=$("skipDeploy").checked,t0=Date.now();drawSteps(null,state);
 var i=0,polls=0;
 (function next(){if(i>=ORDER.length){finish(true);return}var k=ORDER[i];
-if(skip&&k==="deploy"){state[k]="warn";log("— Deploy رد شد (فقط بررسی)","warn");i++;drawSteps(k,state);return next()}
+if(skip&&k==="deploy"){state[k]="warn";log("— Deploy دوباره انجام نشد (طبق انتخاب تو)","warn");i++;drawSteps(k,state);return next()}
 state[k]="run";drawSteps(k,state);if(k!=="wait"||!polls)log("▶ "+NAMES[k],"h");var ts=Date.now();
 api(k,{inp:I,st:ST}).then(function(j){(j.logs||[]).forEach(function(x){log(x.t,x.l)});
 if(j.status===401){log("نشست پنل منقضی شد؛ دوباره وارد شو.","err");sessionStorage.removeItem("sgp-key");state[k]="err";drawSteps(k,state);return finish(false)}
