@@ -91,7 +91,7 @@ details summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--mut)
       </div>
       <div style="height:10px"></div>
       <label class="chk"><input type="checkbox" id="dnsOnly"> ابر خاکستری (بدون Proxy کلادفلر)</label>
-      <label class="chk"><input type="checkbox" id="skipDeploy"> فقط بررسی و تکمیل تنظیمات (بدون Deploy جدید)</label>
+      <label class="chk"><input type="checkbox" id="skipDeploy"> Deploy دوباره نکن (سرویس تازه‌ساخته خودش یک بار Deploy می‌شود)</label>
     </details>
     <div style="height:16px"></div>
     <button class="btn" id="goB">🚀 همه‌چیز را بساز و تنظیم کن</button>
